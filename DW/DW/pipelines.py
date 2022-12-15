@@ -7,9 +7,14 @@
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 
-from .items import DwItem
+from sentimentpl.models import SentimentPLModel
 
-class DwPipeline:
-    def process_item(self, item: DwItem, spider):
+from .items import DWItem
+
+class DWPipeline:
+    def process_item(self, item: DWItem, spider):
+        model = SentimentPLModel(from_pretrained='latest')
+
         item["text"] = "".join(item['text']).strip()
+        item['sentiment'] = model(item["text"][0:500]).item()
         return item
