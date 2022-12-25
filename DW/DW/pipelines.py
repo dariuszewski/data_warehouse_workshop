@@ -9,12 +9,22 @@ from itemadapter import ItemAdapter
 
 from sentimentpl.models import SentimentPLModel
 
-from .items import DWItem
+from .items import ArticleItem, CommentItem
 
 class DWPipeline:
-    def process_item(self, item: DWItem, spider):
-        model = SentimentPLModel(from_pretrained='latest')
+
+    def open_spider(self, spider):
+        self.model = SentimentPLModel(from_pretrained='latest')
+
+    def process_item(self, item, spider):
+
+        if isinstance(item, ArticleItem):
+            # print('ArticleItem')
+            item.setdefault('category', 'article')
+        if isinstance(item, CommentItem):
+            # print('CommentItem')
+            item.setdefault('category', 'comment')
 
         item["text"] = "".join(item['text']).strip()
-        item['sentiment'] = model(item["text"][0:500]).item()
+        item['sentiment'] = self.model(item["text"][0:500]).item()
         return item

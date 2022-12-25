@@ -1,6 +1,6 @@
 import scrapy
 
-from DW.items import DWItem, DWItemLoader
+from DW.items import get_comment, get_article
 
 class PiekielniSpider(scrapy.Spider):
     name = 'piekielni'
@@ -20,13 +20,15 @@ class PiekielniSpider(scrapy.Spider):
 
         for article_link in response.css(".pics_list .picture a::attr(href)"):
             yield response.follow(article_link, self.parse_article)
+            yield response.follow('/pic/komentarze' + article_link.getall().pop(), self.parse_comment)
+
+        # 'https://piekielni.pl/pic/komentarze/89989'
 
     def parse_article(self, response):
-        print('CURRENT USER AGENT: ' + str(response.request.headers['User-Agent']))
+        # print('CURRENT USER AGENT: ' + str(response.request.headers['User-Agent']))
+        yield from get_article(response)
 
-        itemLoader = DWItemLoader(item=DWItem(), response=response)
-        itemLoader.add_css("text", "*.pic_image.type_text::text")
-        itemLoader.add_css("value_plus", '.value_plus::text')
-        itemLoader.add_css("value_total", '.value_total::text')
-        itemLoader.add_css("created_at", 'time::attr("datetime")')
-        yield itemLoader.load_item()
+    
+    def parse_comment(self, response):
+        for comment in response.css('.comment'):
+            yield from get_comment(comment, response)
